@@ -32,8 +32,6 @@
 #include <linux/spi/spi_gpio.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-#include <linux/usb/f_accessory.h>
-#include <linux/usb/android_composite.h>
 #include <linux/switch.h>
 #include <linux/fsa9480.h>
 #include <linux/clk.h>
@@ -1522,168 +1520,6 @@ static struct platform_device spica_wlan_device = {
 };
 
 /*
- * USB gadget
- */
-
-#define S3C_VENDOR_ID			0x18d1
-#define S3C_UMS_PRODUCT_ID		0x4E21
-#define S3C_UMS_ADB_PRODUCT_ID		0x4E22
-#define S3C_MTP_PRODUCT_ID		0x4E21
-#define S3C_MTP_ADB_PRODUCT_ID		0x4E22
-#define S3C_RNDIS_PRODUCT_ID		0x4E23
-#define S3C_RNDIS_ADB_PRODUCT_ID	0x4E24
-
-static char *usb_functions_rndis[] = {
-	"rndis",
-};
-
-static char *usb_functions_rndis_adb[] = {
-	"rndis",
-	"adb",
-};
-
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-static char *usb_functions_accessory[] = {
-	"accessory",
-};
-
-static char *usb_functions_accessory_adb[] = {
-	"accessory",
-	"adb",
-};
-#endif
-
-static char *usb_functions_ums[] = {
-	"usb_mass_storage",
-};
-
-static char *usb_functions_ums_adb[] = {
-	"usb_mass_storage",
-	"adb",
-};
-
-#ifdef CONFIG_USB_ANDROID_MTP
-static char *usb_functions_mtp[] = {
-	"mtp",
-};
-
-static char *usb_functions_mtp_adb[] = {
-	"mtp",
-	"adb",
-};
-#endif
-
-static char *usb_functions_all[] = {
-	"rndis",
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-	"accessory",
-#endif
-	"usb_mass_storage",
-#ifdef CONFIG_USB_ANDROID_MTP
-	"mtp",
-#endif
-	"adb",
-};
-
-static struct android_usb_product usb_products[] = {
-	{
-		.product_id	= S3C_UMS_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_ums),
-		.functions	= usb_functions_ums,
-	}, {
-		.product_id	= S3C_UMS_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_ums_adb),
-		.functions	= usb_functions_ums_adb,
-	},
-#ifdef CONFIG_USB_ANDROID_MTP
-	{
-		.product_id	= S3C_MTP_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_mtp),
-		.functions	= usb_functions_mtp,
-	}, {
-		.product_id	= S3C_MTP_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_mtp_adb),
-		.functions	= usb_functions_mtp_adb,
-	},
-#endif
-	{
-		.product_id	= S3C_RNDIS_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_rndis),
-		.functions	= usb_functions_rndis,
-	}, {
-		.product_id	= S3C_RNDIS_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_rndis_adb),
-		.functions	= usb_functions_rndis_adb,
-	},
-#ifdef CONFIG_USB_ANDROID_ACCESSORY
-	{
-		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
-		.product_id	= USB_ACCESSORY_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_accessory),
-		.functions	= usb_functions_accessory,
-	}, {
-		.vendor_id	= USB_ACCESSORY_VENDOR_ID,
-		.product_id	= USB_ACCESSORY_ADB_PRODUCT_ID,
-		.num_functions	= ARRAY_SIZE(usb_functions_accessory_adb),
-		.functions	= usb_functions_accessory_adb,
-	},
-#endif
-};
-
-static char device_serial[] = "0123456789ABCDEF";
-/* standard android USB platform data */
-
-/* Information should be changed as real product for commercial release */
-static struct android_usb_platform_data android_usb_pdata = {
-	.vendor_id		= S3C_VENDOR_ID,
-	.product_id		= S3C_UMS_PRODUCT_ID,
-	.manufacturer_name	= "Samsung",
-	.product_name		= "Galaxy GT-I5700",
-	.serial_number		= device_serial,
-	.num_products		= ARRAY_SIZE(usb_products),
-	.products		= usb_products,
-	.num_functions		= ARRAY_SIZE(usb_functions_all),
-	.functions		= usb_functions_all,
-};
-
-static struct platform_device spica_android_usb = {
-	.name	= "android_usb",
-	.id	= -1,
-	.dev	= {
-		.platform_data	= &android_usb_pdata,
-	},
-};
-
-static struct usb_mass_storage_platform_data ums_pdata = {
-	.vendor			= "Android",
-	.product		= "UMS Composite",
-	.release		= 1,
-	.nluns			= 1,
-};
-
-static struct platform_device spica_usb_mass_storage = {
-	.name	= "usb_mass_storage",
-	.id	= -1,
-	.dev	= {
-		.platform_data = &ums_pdata,
-	},
-};
-
-static struct usb_ether_platform_data rndis_pdata = {
-	/* ethaddr is filled by board_serialno_setup */
-	.vendorID	= 0x18d1,
-	.vendorDescr	= "Samsung",
-};
-
-static struct platform_device spica_usb_rndis = {
-	.name	= "rndis",
-	.id	= -1,
-	.dev	= {
-		.platform_data = &rndis_pdata,
-	},
-};
-
-/*
  * Telephony modules
  */
 
@@ -1891,9 +1727,6 @@ static struct platform_device *spica_devices[] __initdata = {
 	&s3c_device_i2c1,
 	&s3c_device_fb,
 	&s3c_device_usb_hsotg,
-	&spica_usb_rndis,
-	&spica_usb_mass_storage,
-	&spica_android_usb,
 	&s3c_device_onenand,
 	&samsung_device_keypad,
 	&spica_pmic_i2c,
