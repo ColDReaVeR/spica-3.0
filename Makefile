@@ -356,9 +356,7 @@ MODFLAGS	= -Ofast \
 		  -mfloat-abi=softfp \
 		  -floop-interchange \
 		  -floop-strip-mine \
-		  -floop-block \
-		  -fsingle-precision-constant \
-		  -funsafe-loop-optimizations
+		  -floop-block
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  =
