@@ -794,9 +794,13 @@ static int s5k4ca_set_focus_mode(struct v4l2_subdev *sd, int mode)
 static int s5k4ca_set_capture(struct v4l2_subdev *sd, int mode)
 {
 	struct s5k4ca_state *state = to_state(sd);
+	u16 stat = 0;
 	int ret;
 
 	TRACE_CALL;
+
+	if (state->streaming)
+		return -EBUSY;
 
 	if (mode)
 		ret = s5k4ca_write_regs(state, s5k4ca_snapshot_enable,
@@ -808,6 +812,18 @@ static int s5k4ca_set_capture(struct v4l2_subdev *sd, int mode)
 	if (ret < 0)
 		return ret;
 
+	if (mode) {
+		ret = s5k4ca_sensor_read(state, 0x02ee, &stat);
+		if (ret < 0)
+			return ret;
+		if (stat) {
+			v4l2_err(&state->sd,
+				"Failed to enable capture (stat=%d)\n", stat);
+			return -EFAULT;
+		}
+	}
+
+	state->apply_cfg = 1;
 	state->capture = mode;
 	return ret;
 }
@@ -972,7 +988,7 @@ static void s5k4ca_bound_image(struct s5k4ca_state *state, u32 *w, u32 *h)
 	TRACE_CALL;
 
 	for (i = 0; i < ARRAY_SIZE(s5k4ca_formats); ++i) {
-		if (!((!state->capture) & s5k4ca_formats[i].preview)) {
+		if (!state->capture && !s5k4ca_formats[i].preview) {
 			--i;
 			break;
 		}
@@ -1038,7 +1054,7 @@ static int s5k4ca_enum_frame_size(struct v4l2_subdev *sd,
 	if (fse->index >= ARRAY_SIZE(s5k4ca_formats))
 		return -EINVAL;
 
-	if (!((!state->capture) & s5k4ca_formats[fse->index].preview))
+	if (!state->capture && !s5k4ca_formats[fse->index].preview)
 		return -EINVAL;
 
 	fse->code	= V4L2_MBUS_FMT_VYUY8_2X8;
@@ -1212,6 +1228,9 @@ static int s5k4ca_apply_cfg(struct s5k4ca_state *state)
 	if (i >= ARRAY_SIZE(s5k4ca_formats))
 		return -EINVAL;
 
+	if (!s5k4ca_formats[i].preview && !state->capture)
+		return -EINVAL;
+
 	ret = s5k4ca_write_regs(state, s5k4ca_formats[i].table,
 						s5k4ca_formats[i].table_length);
 	if (ret < 0)
@@ -1264,7 +1283,7 @@ static int s5k4ca_s_stream(struct v4l2_subdev *sd, int on)
 	mutex_lock(&s5k4ca->lock);
 
 	if (s5k4ca->streaming == !on) {
-		if (!ret && s5k4ca->apply_cfg)
+		if (s5k4ca->apply_cfg)
 			ret = s5k4ca_apply_cfg(s5k4ca);
 		if (!ret)
 			ret = s5k4ca_stream(s5k4ca, !!on);
