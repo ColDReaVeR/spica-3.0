@@ -2962,11 +2962,7 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #if !defined(WL_CFG80211)
 	uint up = 0;
 #endif
-<<<<<<< HEAD
-	uint power_mode = PM_FAST;
-=======
 	uint power_mode = PM_MAX;
->>>>>>> 68d8f0d5450c2f057c4192f034cadd51fd963b38
 	uint32 dongle_align = DHD_SDALIGN;
 	uint32 glom = 0;
 	uint bcn_timeout = DHD_BEACON_TIMEOUT_NORMAL;
