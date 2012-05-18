@@ -245,8 +245,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer
+HOSTCXXFLAGS = -Ofast
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -347,13 +347,29 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-MODFLAGS	= -O2 -marm -march=armv6zk \
-		  -mtune=arm1176jzf-s -mfpu=vfp \
-		  -mfloat-abi=softfp
+MODFLAGS	= -Ofast \
+		  -pipe \
+		  -marm \
+		  -march=armv6zk \
+		  -mtune=arm1176jzf-s \
+		  -mfpu=vfp \
+		  -mfloat-abi=softfp \
+		  -floop-interchange \
+		  -floop-strip-mine \
+		  -floop-block
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL	= $(MODFLAGS) \
+CFLAGS_KERNEL	= -Ofast \
+		  -pipe \
+		  -marm \
+		  -march=armv6zk \
+		  -mtune=arm1176jzf-s \
+		  -mfpu=vfp \
+		  -mfloat-abi=softfp \
+		  -floop-interchange \
+		  -floop-strip-mine \
+		  -floop-block \
 		  -fsingle-precision-constant \
 		  -funsafe-loop-optimizations
 AFLAGS_KERNEL	=
@@ -373,7 +389,9 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-strict-aliasing -fno-common \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
-		   -fno-delete-null-pointer-checks $(MODFLAGS)
+		   -fno-delete-null-pointer-checks \
+		   -Ofast -pipe -marm -march=armv6zk -mfpu=vfp \
+		   -mtune=arm1176jzf-s -mfloat-abi=softfp
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -566,7 +584,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -Ofast
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
